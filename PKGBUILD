@@ -2,20 +2,19 @@
 # Contributor: Python Shell <pythonshell@yeah.net>
 
 pkgname=cbmc
-pkgver=5.95.1
+pkgver=6.1.0
 pkgrel=1
 pkgdesc='C Bounded Model Checker'
 arch=('x86_64')
 url='https://diffblue.github.io'
 license=('custom:4-clause BSD license')
-provides=('cbmc')
-conflicts=('cbmc' 'cbmc-git' 'cbmc-bin')
+makedepends=('git')
 changelog=CHANGELOG
 _minisatver=2.2.1
 source=(
   "https://github.com/diffblue/cbmc/archive/refs/tags/cbmc-$pkgver.tar.gz"
   "https://ftp.debian.org/debian/pool/main/m/minisat2/minisat2_$_minisatver.orig.tar.gz")
-b2sums=('463c7a815caf5bc8f9ecae9f6e144a88003e3d8656488d95618f34630096df978a1aafb1db37be4cde86b843bb1d708b702c918bee7066364f2b69b44c87d3d1'
+b2sums=('768b71d1def258d8711de713d7b695b0215dc66f8a33422b93e5e977b226ae42240b818e38918c3987f0684412fe99bd3f7f5dc2432fd3ddadb0d77d8ba0e02a'
         'de9bded4bd8a17ec157af486c0572d47429cd0f59bdd57e1238d3c031d7406dc4e305e5e7368898c991e0184ed845bae21717f10a8ba36ea6b60aac0fb84dc71')
 
 prepare() {
@@ -31,7 +30,7 @@ build() {
 }
 
 package() {
-  cd "$srcdir/cbmc-cbmc-$pkgver/src"
+  cd "$srcdir/cbmc-cbmc-$pkgver"
 
   local -a binaries=(
     cbmc/cbmc
@@ -48,20 +47,18 @@ package() {
     solvers/smt2_solver
     symtab2gb/symtab2gb
   )
-  install -Dm755 -t "$pkgdir/usr/bin" "${binaries[@]}"
+
+  for binary in "${binaries[@]}"; do
+    install -Dm755 -t "$pkgdir/usr/bin" "src/$binary"
+
+    local manpage="doc/man/${binary##*/}.1"
+    [[ -e "$manpage" ]] && install -Dm644 -t "$pkgdir/usr/share/man/man1" $manpage
+  done
 
   ln -s "goto-cc" "$pkgdir/usr/bin/goto-gcc"
   ln -s "goto-cc" "$pkgdir/usr/bin/goto-ld"
-
-  cd ..
-
-  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" "LICENSE"
-
-  for binary in "${binaries[@]}"; do
-    local name="doc/man/${binary##*/}.1"
-    [[ -e "$name" ]] && install -Dm644 -t "$pkgdir/usr/share/man/man1" $name
-  done
-
   ln -s "goto-cc.1.gz" "$pkgdir/usr/share/man/man1/goto-gcc.1.gz"
   ln -s "goto-cc.1.gz" "$pkgdir/usr/share/man/man1/goto-ld.1.gz"
+
+  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" "LICENSE"
 }
